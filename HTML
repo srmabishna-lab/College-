@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>College Club Management Portal</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <h1>Club Connect</h1>
+  <nav id="nav">
+    <button data-page="home" class="active">Home</button>
+    <button data-page="clubs">Clubs</button>
+    <button data-page="register">Register</button>
+    <button data-page="members">Members</button>
+    <button data-page="events">Events</button>
+  </nav>
+  <span id="who" class="who">Not registered</span>
+</header>
+
+<main>
+  <section id="home" class="page">
+    <div class="banner">
+      <h2>College Club Management Portal</h2>
+      <p>Discover clubs, join activities and never miss an event.</p>
+      <p id="clock" class="clock"></p>
+    </div>
+    <div id="stats" class="stats"></div>
+    <h3>Coming up</h3>
+    <div id="upcoming"></div>
+  </section>
+
+  <section id="clubs" class="page hidden">
+    <h2>Clubs</h2>
+    <div class="toolbar">
+      <input id="search" type="search" placeholder="Search by club, category or coordinator">
+      <select id="category"><option value="">All categories</option></select>
+      <select id="sort">
+        <option value="name">Sort: Name</option>
+        <option value="members">Sort: Most members</option>
+      </select>
+    </div>
+    <p id="count" class="note"></p>
+    <div id="clubGrid" class="grid"></div>
+  </section>
+
+  <section id="register" class="page hidden">
+    <h2>Member Registration</h2>
+    <form id="regForm" class="panel" novalidate>
+      <label>Full name <input id="fName" type="text"><small id="eName"></small></label>
+      <label>Register number <input id="fReg" type="text"><small id="eReg"></small></label>
+      <label>Email <input id="fEmail" type="email"><small id="eEmail"></small></label>
+      <label>Phone <input id="fPhone" type="tel"><small id="ePhone"></small></label>
+      <label>Department
+        <select id="fDept">
+          <option value="">Select department</option>
+          <option>Computer Science</option>
+          <option>Commerce</option>
+          <option>Mathematics</option>
+          <option>English</option>
+          <option>Physics</option>
+        </select>
+        <small id="eDept"></small>
+      </label>
+      <button type="submit">Register</button>
+      <p id="regMsg" class="success"></p>
+    </form>
+  </section>
+
+  <section id="members" class="page hidden">
+    <h2>Club Members</h2>
+    <div class="toolbar"><select id="memberClub"></select></div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>S.No</th><th>Name</th><th>Department</th><th>Register No.</th></tr>
+        </thead>
+        <tbody id="memberRows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="events" class="page hidden">
+    <h2>Event Announcements</h2>
+    <form id="evForm" class="panel">
+      <select id="evClub"></select>
+      <input id="evTitle" type="text" placeholder="Event title">
+      <input id="evDate" type="date">
+      <textarea id="evDesc" rows="2" placeholder="Short description"></textarea>
+      <button type="submit">Publish announcement</button>
+      <p id="evMsg" class="success"></p>
+    </form>
+    <div id="evList"></div>
+  </section>
+</main>
+
+<div id="modal" class="modal hidden"><div class="modal-box" id="modalBox"></div></div>
+<div id="toast" class="toast hidden"></div>
+<footer>&copy; 2026 College Club Management Portal</footer>
+<script src="script.js"></script>
+</body>
+</html>
