@@ -1,0 +1,210 @@
+// ---------- Data (stored as arrays of objects) ----------
+const clubs = [
+  { id: 1, name: "Coding Club", category: "Technical", coordinator: "Dr. Kavitha",
+    meeting: "Friday, 3:00 PM", about: "Learn programming, web development and hackathon skills.",
+    members: [{ name: "Kavya M", dept: "Computer Science", reg: "25183091802522041" },
+              { name: "Lakshana R", dept: "Computer Science", reg: "25183091802522042" }] },
+  { id: 2, name: "Robotics Club", category: "Technical", coordinator: "Mr. Suresh",
+    meeting: "Tuesday, 4:00 PM", about: "Build and program small robots and IoT projects.",
+    members: [{ name: "Janani T", dept: "Physics", reg: "25183091802522043" }] },
+  { id: 3, name: "Literary Club", category: "Cultural", coordinator: "Prof. Meena",
+    meeting: "Wednesday, 2:00 PM", about: "Debates, poetry, story writing and public speaking.",
+    members: [{ name: "Harini S", dept: "English", reg: "25183091802522044" }] },
+  { id: 4, name: "Music Club", category: "Cultural", coordinator: "Ms. Revathi",
+    meeting: "Thursday, 3:30 PM", about: "Singing, instruments and stage performances.",
+    members: [] },
+  { id: 5, name: "Eco Club", category: "Social Service", coordinator: "Dr. Lakshmi",
+    meeting: "Saturday, 9:00 AM", about: "Tree planting, clean-up drives and awareness camps.",
+    members: [{ name: "Divya P", dept: "Commerce", reg: "25183091802522045" },
+              { name: "Nisha K", dept: "Mathematics", reg: "25183091802522046" }] },
+  { id: 6, name: "Sports Club", category: "Sports", coordinator: "Ms. Deepa",
+    meeting: "Daily, 5:00 PM", about: "Athletics, volleyball, kabaddi and inter-college meets.",
+    members: [{ name: "Meena V", dept: "Mathematics", reg: "25183091802522047" }] }
+];
+const events = [
+  { club: 1, title: "Web Design Hackathon", date: "2026-11-05",
+    desc: "Build a responsive website in three hours." },
+  { club: 5, title: "Tree Plantation Drive", date: "2026-11-12",
+    desc: "Meet at the main gate at 8:30 AM." },
+  { club: 3, title: "Inter-Department Debate", date: "2026-11-20",
+    desc: "Topic: Technology in education." }
+];
+let student = null;   // registered student for the current session
+
+// ---------- Helpers ----------
+const $ = (sel) => document.querySelector(sel);
+const esc = (t) => String(t).replace(/[&<>"']/g,
+  (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const clubName = (id) => clubs.find((c) => c.id === id).name;
+const isMember = (club) => student && club.members.some((m) => m.reg === student.reg);
+
+function toast(msg) {
+  const t = $("#toast");
+  t.textContent = msg;
+  t.classList.remove("hidden");
+  setTimeout(() => t.classList.add("hidden"), 2200);
+}
+
+// ---------- Navigation (single page, sections shown/hidden) ----------
+function showPage(id) {
+  document.querySelectorAll(".page").forEach((p) => p.classList.toggle("hidden", p.id !== id));
+  document.querySelectorAll("#nav button")
+    .forEach((b) => b.classList.toggle("active", b.dataset.page === id));
+}
+$("#nav").addEventListener("click", (e) => {
+  if (e.target.dataset.page) showPage(e.target.dataset.page);
+});
+
+// ---------- Live clock ----------
+function updateClock() {
+  const now = new Date();
+  $("#clock").textContent = now.toLocaleDateString() + "  " + now.toLocaleTimeString();
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+// ---------- Dashboard ----------
+function renderStats() {
+  const total = clubs.reduce((sum, c) => sum + c.members.length, 0);
+  const items = [[clubs.length, "Active Clubs"], [total, "Total Memberships"],
+                 [events.length, "Upcoming Events"]];
+  $("#stats").innerHTML = items.map(([n, label]) =>
+    `<div class="stat"><b>${n}</b>${label}</div>`).join("");
+}
+function renderUpcoming() {
+  const next = [...events].sort((a, b) => a.date.localeCompare(b.date)).slice(0, 3);
+  $("#upcoming").innerHTML = next.map((e) =>
+    `<div class="event"><h4>${esc(e.title)}</h4>
+     <p><b>${clubName(e.club)}</b> | ${e.date}</p></div>`).join("");
+}
+
+// ---------- Clubs: dynamic cards, search, filter, sort ----------
+[...new Set(clubs.map((c) => c.category))]
+  .forEach((cat) => $("#category").add(new Option(cat, cat)));
+clubs.forEach((c) => {
+  $("#memberClub").add(new Option(c.name, c.id));
+  $("#evClub").add(new Option(c.name, c.id));
+});
+
+function renderClubs() {
+  const q = $("#search").value.trim().toLowerCase();
+  const cat = $("#category").value;
+  const sort = $("#sort").value;
+  const list = clubs
+    .filter((c) => !cat || c.category === cat)
+    .filter((c) => (c.name + " " + c.category + " " + c.coordinator).toLowerCase().includes(q))
+    .sort((a, b) => sort === "members" ? b.members.length - a.members.length
+                                       : a.name.localeCompare(b.name));
+  $("#count").textContent = list.length + " club(s) found";
+  $("#clubGrid").innerHTML = list.map((c) => `
+    <div class="card">
+      <h3>${c.name}</h3><p>${c.about}</p>
+      <span class="tag">${c.category}</span>
+      <span class="tag">${c.members.length} member(s)</span><br>
+      <button class="btn" data-act="details" data-id="${c.id}">Details</button>
+      <button class="btn ${isMember(c) ? "leave" : "join"}" data-act="toggle"
+        data-id="${c.id}">${isMember(c) ? "Leave Club" : "Join Club"}</button>
+    </div>`).join("") || "<p>No clubs match your search.</p>";
+}
+["input", "change"].forEach((ev) => {
+  $("#search").addEventListener(ev, renderClubs);
+  $("#category").addEventListener(ev, renderClubs);
+  $("#sort").addEventListener(ev, renderClubs);
+});
+$("#clubGrid").addEventListener("click", (e) => {
+  const id = Number(e.target.dataset.id);
+  if (e.target.dataset.act === "details") openDetails(id);
+  if (e.target.dataset.act === "toggle") toggleMembership(id);
+});
+
+// ---------- Club details pop-up ----------
+function openDetails(id) {
+  const c = clubs.find((x) => x.id === id);
+  $("#modalBox").innerHTML = `<h3>${c.name}</h3><p>${c.about}</p>
+    <p><b>Category:</b> ${c.category}</p>
+    <p><b>Coordinator:</b> ${c.coordinator}</p>
+    <p><b>Meeting time:</b> ${c.meeting}</p>
+    <p><b>Members:</b> ${c.members.length}</p>
+    <button class="btn" id="closeModal">Close</button>`;
+  $("#modal").classList.remove("hidden");
+  $("#closeModal").onclick = () => $("#modal").classList.add("hidden");
+}
+$("#modal").addEventListener("click", (e) => {
+  if (e.target.id === "modal") $("#modal").classList.add("hidden");
+});
+
+// ---------- Join / Leave ----------
+function toggleMembership(id) {
+  if (!student) { toast("Please register first."); showPage("register"); return; }
+  const club = clubs.find((c) => c.id === id);
+  if (isMember(club)) {
+    club.members = club.members.filter((m) => m.reg !== student.reg);
+    toast("You left " + club.name);
+  } else {
+    club.members.push({ name: student.name, dept: student.dept, reg: student.reg });
+    toast("You joined " + club.name);
+  }
+  renderAll();
+}
+
+// ---------- Registration with regular-expression validation ----------
+const rules = {
+  name:  { re: /^[A-Za-z .]{3,40}$/, msg: "Enter a valid name (letters only, 3-40 characters)." },
+  reg:   { re: /^\d{10,17}$/, msg: "Register number must contain 10 to 17 digits." },
+  email: { re: /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/, msg: "Enter a valid email address." },
+  phone: { re: /^[6-9]\d{9}$/, msg: "Enter a 10-digit mobile number starting with 6-9." }
+};
+function check(field, value) {
+  const ok = rules[field].re.test(value);
+  $("#e" + field[0].toUpperCase() + field.slice(1)).textContent = ok ? "" : rules[field].msg;
+  return ok;
+}
+$("#regForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const v = { name: $("#fName").value.trim(), reg: $("#fReg").value.trim(),
+              email: $("#fEmail").value.trim(), phone: $("#fPhone").value.trim() };
+  const dept = $("#fDept").value;
+  const valid = [check("name", v.name), check("reg", v.reg),
+                 check("email", v.email), check("phone", v.phone)];
+  $("#eDept").textContent = dept ? "" : "Please select your department.";
+  if (!valid.every(Boolean) || !dept) { $("#regMsg").textContent = ""; return; }
+  student = { name: v.name, reg: v.reg, dept: dept };
+  $("#regMsg").textContent = "Registered successfully! Welcome, " + v.name + ".";
+  e.target.reset();
+  renderAll();
+});
+
+// ---------- Members table ----------
+function renderMembers() {
+  const club = clubs.find((c) => c.id === Number($("#memberClub").value));
+  $("#memberRows").innerHTML = club.members.length
+    ? club.members.map((m, i) => `<tr><td>${i + 1}</td><td>${esc(m.name)}</td>
+        <td>${m.dept}</td><td>${m.reg}</td></tr>`).join("")
+    : `<tr><td colspan="4">No members yet.</td></tr>`;
+}
+$("#memberClub").addEventListener("change", renderMembers);
+
+// ---------- Event announcements ----------
+function renderEvents() {
+  const sorted = [...events].sort((a, b) => a.date.localeCompare(b.date));
+  $("#evList").innerHTML = sorted.map((e) =>
+    `<div class="event"><h4>${esc(e.title)}</h4>
+     <p><b>${clubName(e.club)}</b> | ${e.date}</p><p>${esc(e.desc)}</p></div>`).join("");
+}
+$("#evForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const title = $("#evTitle").value.trim(), date = $("#evDate").value;
+  const desc = $("#evDesc").value.trim();
+  if (!title || !date || !desc) { $("#evMsg").textContent = ""; toast("Fill all the fields."); return; }
+  events.push({ club: Number($("#evClub").value), title, date, desc });
+  $("#evMsg").textContent = "Announcement published!";
+  e.target.reset();
+  renderAll();
+});
+
+// ---------- Refresh the whole UI ----------
+function renderAll() {
+  $("#who").textContent = student ? "Signed in: " + student.name : "Not registered";
+  renderStats(); renderUpcoming(); renderClubs(); renderMembers(); renderEvents();
+}
+renderAll();
